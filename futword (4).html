@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="FutWord — o jogo de palavras do futebol brasileiro">
+<meta name="theme-color" content="#0a0f0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FutWord">
+<meta name="mobile-web-app-capable" content="yes">
+<title>FutWord ⚽</title>
+<!-- PWA: manifest embedded as data URI so everything stays in one file -->
+<link rel="manifest" id="manifest-link">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23080d08'/%3E%3Ctext x='50' y='68' font-size='56' text-anchor='middle'%3E%E2%9A%BD%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23080d08'/%3E%3Ctext x='50' y='68' font-size='56' text-anchor='middle'%3E%E2%9A%BD%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #d4a017;
+  --gold-dim: #a07810;
+  --white: #f0f4f0;
+  --muted: #7a9a7a;
+  --bg: #080d08;
+  --surface: #0e160e;
+  --surface2: #141e14;
+  --correct: #2d7a2d;
+  --correct-text: #c8f0c8;
+  --present: #8a6200;
+  --present-text: #ffd970;
+  --absent: #1e261e;
+  --absent-text: #4a664a;
+  --border: #1e2e1e;
+  --border-light: #2a3e2a;
+  --locked: #0a120a;
+  --locked-text: #2a3e2a;
+}
+body.light {
+  --gold: #b8860b;
+  --gold-dim: #9a7209;
+  --white: #1a2e1a;
+  --muted: #5a7a5a;
+  --bg: #eef3ea;
+  --surface: #ffffff;
+  --surface2: #e4ecde;
+  --correct: #3a9a3a;
+  --correct-text: #ffffff;
+  --present: #c9931a;
+  --present-text: #ffffff;
+  --absent: #c2cdba;
+  --absent-text: #6a7a64;
+  --border: #d0dac8;
+  --border-light: #b8c6ae;
+  --locked: #dde4d6;
+  --locked-text: #a0b096;
+}
+body.light .key { border-bottom-color: #c0ccb6; }
+body.light body::before { background: radial-gradient(ellipse at top, rgba(120,180,80,0.15) 0%, transparent 70%); }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--white); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+body::before {
+  content: '';
+  position: fixed;
+  top: -20%; left: 50%;
+  transform: translateX(-50%);
+  width: 140%; height: 60%;
+  background: radial-gradient(ellipse at top, rgba(30,90,30,0.18) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+
+#app {
+  position: relative; z-index: 1;
+  min-height: 100dvh;
+  display: flex; flex-direction: column; align-items: center;
+  max-width: 500px; margin: 0 auto; padding: 0 12px 32px;
+}
+
+/* HEADER */
+header {
+  width: 100%;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0 12px;
+  border-bottom: 0.5px solid var(--border);
+  margin-bottom: 14px;
+}
+.logo { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 4px; color: var(--white); line-height: 1; }
+.logo span { color: var(--gold); }
+.header-right { text-align: right; }
+.challenge-num { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--gold); letter-spacing: 2px; }
+.tagline { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+
+/* STREAK BAR */
+#streak-bar {
+  width: 100%;
+  display: flex; gap: 8px; align-items: center;
+  background: var(--surface);
+  border: 0.5px solid var(--border-light);
+  border-radius: 10px;
+  padding: 8px 16px;
+  margin-bottom: 12px;
+}
+.streak-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
+.streak-val { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--white); line-height: 1; }
+.streak-lbl { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+.streak-div { width: 0.5px; height: 28px; background: var(--border-light); }
+
+/* LEVEL INDICATORS */
+#level-nav {
+  width: 100%;
+  display: flex; gap: 6px;
+  margin-bottom: 12px;
+}
+.lvl-btn {
+  flex: 1; padding: 8px 4px;
+  background: var(--surface);
+  border: 1.5px solid var(--border-light);
+  border-radius: 8px;
+  color: var(--muted);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px; letter-spacing: 1px;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  transition: all 0.2s;
+  position: relative;
+}
+.lvl-btn.active { border-color: var(--gold); color: var(--gold); }
+.lvl-btn.done { border-color: var(--correct); color: var(--correct-text); background: rgba(45,122,45,0.15); }
+.lvl-btn.locked { border-color: var(--border); color: var(--locked-text); cursor: not-allowed; background: var(--locked); }
+.lvl-dots { display: flex; gap: 3px; }
+.lvl-dot { width: 6px; height: 6px; border-radius: 1px; background: var(--border-light); }
+.lvl-btn.active .lvl-dot { background: var(--gold); }
+.lvl-btn.done .lvl-dot { background: var(--correct); }
+.lvl-lock { font-size: 12px; }
+
+/* BOARD */
+#board { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.row { display: flex; gap: 5px; justify-content: center; align-items: center; perspective: 600px; }
+.tile {
+  width: 52px; height: 52px;
+  border: 1.5px solid var(--border-light);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px; color: var(--white); text-transform: uppercase;
+  background: var(--surface);
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  transform-origin: center center;
+  vertical-align: middle;
+}
+.tile.filled { animation: pop 0.1s ease; }
+@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+.tile.correct { background: var(--correct); border-color: var(--correct); color: var(--correct-text); }
+.tile.present { background: var(--present); border-color: var(--present); color: var(--present-text); }
+.tile.absent  { background: var(--absent);  border-color: var(--absent);  color: var(--absent-text); }
+.tile.reveal  { animation: flip 0.45s ease forwards; }
+@keyframes flip {
+  0%   { transform: rotateX(0deg); }
+  50%  { transform: rotateX(90deg); }
+  51%  { transform: rotateX(90deg); }
+  100% { transform: rotateX(0deg); }
+}
+
+/* STATUS */
+#status { min-height: 38px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; margin-bottom: 8px; }
+#message { font-size: 13px; color: var(--muted); letter-spacing: 0.5px; text-align: center; }
+#message.win  { color: #6dbe6d; font-weight: 600; }
+#message.lose { color: #d46060; }
+#hint-box { font-size: 11px; color: var(--gold-dim); text-align: center; }
+
+/* LEGEND */
+#legend { display: flex; gap: 14px; align-items: center; justify-content: center; margin-bottom: 10px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); letter-spacing: 0.5px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+.legend-dot.correct { background: var(--correct); }
+.legend-dot.present { background: var(--present); }
+.legend-dot.absent  { background: var(--absent); border: 0.5px solid var(--border-light); }
+
+/* KEYBOARD */
+#keyboard { width: 100%; display: flex; flex-direction: column; gap: 6px; align-items: center; margin-bottom: 12px; }
+.kb-row { display: flex; gap: 4px; justify-content: center; }
+.key {
+  width: 34px; height: 48px; padding: 0;
+  background: var(--surface2);
+  border: 1.5px solid var(--border-light);
+  border-bottom: 3px solid #0d160d;
+  border-radius: 6px;
+  color: var(--white);
+  font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  text-transform: uppercase; user-select: none;
+  transition: background 0.15s, color 0.15s, transform 0.08s, border-bottom 0.08s;
+  -webkit-tap-highlight-color: transparent; flex-shrink: 0;
+}
+.key:active { transform: translateY(2px); border-bottom-width: 1px; }
+.key.wide { width: 52px; font-size: 11px; letter-spacing: 0.5px; }
+.key.correct { background: var(--correct); border-color: var(--correct); border-bottom-color: #1a4a1a; color: var(--correct-text); }
+.key.present { background: var(--present); border-color: var(--present); border-bottom-color: #5a3e00; color: var(--present-text); }
+.key.absent  { background: var(--absent);  border-color: var(--absent);  border-bottom-color: #0d160d; color: var(--absent-text); }
+
+/* END BUTTONS */
+#btn-row { display: none; gap: 8px; width: 100%; justify-content: center; margin-top: 4px; flex-wrap: wrap; }
+#next-level {
+  padding: 10px 24px;
+  background: var(--correct); border: none;
+  border-radius: 8px; color: var(--correct-text);
+  font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px;
+  cursor: pointer; transition: opacity 0.2s;
+}
+#next-level:active { opacity: 0.8; }
+#share-btn, #share-img-btn {
+  padding: 10px 16px;
+  background: transparent; border: 0.5px solid var(--border-light);
+  border-radius: 8px; color: var(--muted);
+  font-family: 'Inter', sans-serif; font-size: 13px; cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+#share-btn:hover, #share-img-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+/* COMPLETED SCREEN */
+#completed-screen {
+  display: none;
+  flex-direction: column; align-items: center;
+  text-align: center; gap: 12px; padding: 24px 0;
+  width: 100%;
+}
+#completed-screen h2 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: var(--gold); }
+#completed-screen p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+#completed-emoji { font-size: 28px; line-height: 1.5; letter-spacing: 2px; }
+#final-share, #final-share-img {
+  padding: 10px 24px;
+  background: var(--correct); border: none; border-radius: 8px;
+  color: var(--correct-text); font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px; letter-spacing: 2px; cursor: pointer;
+}
+#final-share-img { background: transparent; border: 0.5px solid var(--border-light); color: var(--gold); }
+
+/* TOAST */
+#toast {
+  position: fixed; top: 20px; left: 50%;
+  transform: translateX(-50%) translateY(-60px);
+  background: var(--surface2); border: 0.5px solid var(--border-light);
+  color: var(--white); font-size: 13px; padding: 8px 20px;
+  border-radius: 20px; transition: transform 0.3s ease;
+  z-index: 100; white-space: nowrap;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* LOCKED OVERLAY */
+#locked-msg {
+  display: none;
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 32px 0; text-align: center;
+}
+#locked-msg .lock-icon { font-size: 36px; }
+#locked-msg p { font-size: 13px; color: var(--muted); }
+
+@media (max-width: 400px) {
+  .tile { width: 46px; height: 46px; font-size: 20px; }
+  .key  { width: 30px; height: 44px; font-size: 12px; }
+  .key.wide { width: 46px; }
+}
+@media (max-width: 340px) {
+  .tile { width: 40px; height: 40px; font-size: 18px; }
+  .key  { width: 26px; height: 40px; font-size: 11px; }
+  .key.wide { width: 40px; }
+}
+
+/* ── MODE TABS ── */
+#mode-tabs { width: 100%; display: flex; gap: 6px; margin-bottom: 12px; }
+.mode-tab {
+  flex: 1; padding: 8px;
+  background: var(--surface); border: 1.5px solid var(--border-light);
+  border-radius: 8px; color: var(--muted);
+  font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 1px;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.mode-tab.active { border-color: var(--gold); color: var(--gold); }
+
+/* ── TOOLBAR ── */
+#toolbar { width: 100%; display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px; }
+.tool-btn {
+  width: 36px; height: 36px;
+  background: var(--surface); border: 0.5px solid var(--border-light);
+  border-radius: 8px; color: var(--muted); cursor: pointer;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.tool-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
+.tool-btn.off { opacity: 0.4; }
+
+/* ── CONFETTI ── */
+#confetti { position: fixed; inset: 0; pointer-events: none; z-index: 200; overflow: hidden; }
+.confetti-piece { position: absolute; width: 9px; height: 9px; top: -20px; opacity: 0.9; will-change: transform; }
+
+/* ── MODAL ── */
+#modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7); z-index: 150;
+  align-items: center; justify-content: center; padding: 20px;
+}
+#modal-overlay.show { display: flex; }
+.modal {
+  background: var(--surface); border: 0.5px solid var(--border-light);
+  border-radius: 16px; padding: 24px; max-width: 420px; width: 100%;
+  max-height: 85vh; overflow-y: auto;
+}
+.modal h2 {
+  font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px;
+  color: var(--white); margin-bottom: 16px; text-align: center;
+}
+.modal-close {
+  float: right; background: none; border: none; color: var(--muted);
+  font-size: 22px; cursor: pointer; line-height: 1; margin-top: -4px;
+}
+
+/* ── DISTRIBUTION CHART ── */
+.dist-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.dist-label { font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: var(--muted); width: 16px; }
+.dist-bar-wrap { flex: 1; background: var(--surface2); border-radius: 4px; overflow: hidden; height: 22px; }
+.dist-bar {
+  height: 100%; background: var(--correct); color: var(--correct-text);
+  display: flex; align-items: center; justify-content: flex-end;
+  padding: 0 8px; font-size: 12px; font-weight: 600; min-width: 26px;
+  border-radius: 4px; transition: width 0.6s ease;
+}
+.dist-bar.zero { background: var(--absent); color: var(--absent-text); }
+
+/* ── ACHIEVEMENTS ── */
+.ach-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+.ach-card {
+  background: var(--surface2); border: 0.5px solid var(--border);
+  border-radius: 10px; padding: 12px; text-align: center;
+  transition: all 0.2s;
+}
+.ach-card.unlocked { border-color: var(--gold-dim); background: rgba(212,160,23,0.08); }
+.ach-icon { font-size: 26px; margin-bottom: 6px; filter: grayscale(1) opacity(0.4); }
+.ach-card.unlocked .ach-icon { filter: none; }
+.ach-name { font-size: 12px; font-weight: 600; color: var(--white); margin-bottom: 2px; }
+.ach-desc { font-size: 10px; color: var(--muted); line-height: 1.3; }
+
+/* Stats bar clickable hint */
+#streak-bar { cursor: pointer; }
+
+/* ── CATEGORY FILTER ── */
+#cat-filter { width: 100%; display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.cat-chip {
+  flex: 1; min-width: 70px; padding: 7px 8px;
+  background: var(--surface); border: 1.5px solid var(--border-light);
+  border-radius: 20px; color: var(--muted);
+  font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.cat-chip.active { border-color: var(--gold); color: var(--gold); background: rgba(212,160,23,0.08); }
+
+/* ── CURIOSITY BOX ── */
+#curio-box {
+  display: none; width: 100%; max-width: 380px;
+  background: rgba(212,160,23,0.07);
+  border: 0.5px solid var(--gold-dim);
+  border-radius: 10px; padding: 12px 14px; margin: 4px auto 8px;
+  font-size: 12px; color: var(--white); line-height: 1.5;
+}
+#curio-box .curio-tag {
+  font-family: 'Bebas Neue', sans-serif; font-size: 13px;
+  color: var(--gold); letter-spacing: 1px; display: block; margin-bottom: 3px;
+}
+
+/* ── HELP MODAL CONTENT ── */
+.help-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.help-tiles { display: flex; gap: 3px; flex-shrink: 0; }
+.help-tile {
+  width: 30px; height: 30px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif; font-size: 15px;
+  border: 1px solid var(--border-light);
+}
+.help-tile.correct { background: var(--correct); color: var(--correct-text); border-color: var(--correct); }
+.help-tile.present { background: var(--present); color: var(--present-text); border-color: var(--present); }
+.help-tile.absent  { background: var(--absent); color: var(--absent-text); border-color: var(--absent); }
+.help-text { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.help-text b { color: var(--white); }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div id="app">
+
+  <header>
+    <div>
+      <div class="logo">FUT<span>WORD</span></div>
+    </div>
+    <div class="header-right">
+      <div class="challenge-num" id="challenge-num">DESAFIO #1</div>
+      <div class="tagline">Palavra do dia</div>
+    </div>
+  </header>
+
+  <div id="streak-bar" onclick="openStats()">
+    <div class="streak-item">
+      <div class="streak-val" id="stat-streak">0</div>
+      <div class="streak-lbl">Sequência</div>
+    </div>
+    <div class="streak-div"></div>
+    <div class="streak-item">
+      <div class="streak-val" id="stat-best">0</div>
+      <div class="streak-lbl">Recorde</div>
+    </div>
+    <div class="streak-div"></div>
+    <div class="streak-item">
+      <div class="streak-val" id="stat-wins">0</div>
+      <div class="streak-lbl">Vitórias</div>
+    </div>
+    <div class="streak-div"></div>
+    <div class="streak-item">
+      <div class="streak-val" id="stat-played">0</div>
+      <div class="streak-lbl">Jogados</div>
+    </div>
+  </div>
+
+  <div id="mode-tabs">
+    <button class="mode-tab active" id="mode-daily" onclick="setMode('daily')">📅 Desafio do dia</button>
+    <button class="mode-tab" id="mode-free" onclick="setMode('free')">♾️ Modo livre</button>
+  </div>
+
+  <div id="toolbar">
+    <button class="tool-btn" id="btn-help" onclick="openHelp()" title="Como jogar">❓</button>
+    <button class="tool-btn" id="btn-challenge" onclick="createChallengeLink()" title="Desafiar amigo">🔗</button>
+    <button class="tool-btn" id="btn-theme" onclick="toggleTheme()" title="Tema">🌙</button>
+    <button class="tool-btn" id="btn-sound" onclick="toggleSound()" title="Som">🔊</button>
+    <button class="tool-btn" onclick="openStats()" title="Estatísticas">📊</button>
+    <button class="tool-btn" onclick="openAchievements()" title="Conquistas">🏆</button>
+  </div>
+
+  <div id="cat-filter" style="display:none;">
+    <button class="cat-chip active" data-cat="todos" onclick="setCategory('todos')">Tudo</button>
+    <button class="cat-chip" data-cat="termo" onclick="setCategory('termo')">⚽ Termos</button>
+    <button class="cat-chip" data-cat="time" onclick="setCategory('time')">🛡 Times</button>
+    <button class="cat-chip" data-cat="jogador" onclick="setCategory('jogador')">👤 Jogadores</button>
+  </div>
+
+  <div id="level-nav">
+    <button class="lvl-btn active" id="lvl-0" onclick="selectLevel(0)">
+      <span>5 LETRAS</span>
+      <div class="lvl-dots" id="dots-0"></div>
+    </button>
+    <button class="lvl-btn locked" id="lvl-1" onclick="selectLevel(1)">
+      <span>6 LETRAS</span>
+      <div class="lvl-dots" id="dots-1"><span class="lvl-lock">🔒</span></div>
+    </button>
+    <button class="lvl-btn locked" id="lvl-2" onclick="selectLevel(2)">
+      <span>7 LETRAS</span>
+      <div class="lvl-dots" id="dots-2"><span class="lvl-lock">🔒</span></div>
+    </button>
+  </div>
+
+  <div id="legend">
+    <div class="legend-item"><div class="legend-dot correct"></div>Posição certa</div>
+    <div class="legend-item"><div class="legend-dot present"></div>Letra certa</div>
+    <div class="legend-item"><div class="legend-dot absent"></div>Não existe</div>
+  </div>
+
+  <div id="game-area">
+    <div id="board"></div>
+    <div id="status">
+      <div id="message"></div>
+      <div id="hint-box"></div>
+    </div>
+    <div id="curio-box"></div>
+    <div id="btn-row">
+      <button id="share-btn" onclick="shareLevel()">Texto 📋</button>
+      <button id="share-img-btn" onclick="shareImage()">Imagem 🖼</button>
+      <button id="next-level" onclick="goNextLevel()">PRÓXIMA FASE →</button>
+    </div>
+  </div>
+
+  <div id="locked-msg">
+    <div class="lock-icon">🔒</div>
+    <p>Complete a fase anterior para desbloquear.</p>
+  </div>
+
+  <div id="completed-screen">
+    <h2>⚽ Desafio completo!</h2>
+    <p>Você completou os três níveis de hoje.<br>Volte amanhã para um novo desafio.</p>
+    <div id="completed-emoji"></div>
+    <div style="display:flex;gap:8px;">
+      <button id="final-share" onclick="shareFinal()">Texto 📋</button>
+      <button id="final-share-img" onclick="shareImage()">Imagem 🖼</button>
+    </div>
+  </div>
+
+  <div id="keyboard"></div>
+
+</div>
+
+<div id="confetti"></div>
+
+<div id="modal-overlay" onclick="closeModalBg(event)">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+// ── WORD LISTS ──────────────────────────────────────────────
+const WORDS5 = [
+  {word:"CHUTE",hint:"Movimento para bater na bola",cat:"termo"},
+  {word:"TRAVE",hint:"A bola bateu na ___ e não entrou",cat:"termo",curio:"A distância entre as traves é de 7,32 metros, padrão FIFA."},
+  {word:"FALTA",hint:"Infração marcada pelo árbitro",cat:"termo"},
+  {word:"CAMPO",hint:"Onde acontece o jogo",cat:"termo"},
+  {word:"LANCE",hint:"Momento decisivo do jogo",cat:"termo"},
+  {word:"PASSE",hint:"Repasse da bola a um companheiro",cat:"termo"},
+  {word:"BANCO",hint:"Onde os reservas ficam sentados",cat:"termo"},
+  {word:"CANTO",hint:"Cobrança de escanteio",cat:"termo"},
+  {word:"POSSE",hint:"Domínio da bola",cat:"termo"},
+  {word:"CURVA",hint:"Trajetória da bola em falta cobrada",cat:"termo"},
+  {word:"RECUO",hint:"Passe para trás para o goleiro",cat:"termo"},
+  {word:"LINHA",hint:"Demarcação do campo",cat:"termo"},
+  {word:"BLOCO",hint:"Formação defensiva compacta",cat:"termo"},
+  {word:"SALTO",hint:"Pular para cabecear",cat:"termo"},
+  {word:"LIVRE",hint:"Cobrança de falta direta",cat:"termo"},
+  {word:"GARRA",hint:"Raça e determinação em campo",cat:"termo"},
+  {word:"CORTE",hint:"Interceptação defensiva da bola",cat:"termo"},
+  {word:"DUPLA",hint:"Parceria entre dois atacantes",cat:"termo"},
+  {word:"TEMPO",hint:"Cada metade da partida tem um",cat:"termo"},
+  {word:"TURNO",hint:"Primeiro ou segundo ___ do campeonato",cat:"termo"},
+  {word:"PERNA",hint:"Principal ferramenta do jogador",cat:"termo"},
+  {word:"APOIO",hint:"Jogador que serve de suporte",cat:"termo"},
+  {word:"BEIRA",hint:"___ de campo, a linha lateral",cat:"termo"},
+  {word:"SUSTO",hint:"O goleiro levou um ___ na finalização",cat:"termo"},
+  {word:"CRAVO",hint:"Trava da chuteira que agarra o gramado",cat:"termo"},
+  {word:"TOQUE",hint:"Contato leve e preciso com a bola",cat:"termo"},
+  {word:"TROCA",hint:"___ de passes entre os jogadores",cat:"termo"},
+  {word:"BAIXO",hint:"Cruzamento rasteiro, junto ao chão",cat:"termo"},
+  {word:"BRIGA",hint:"Disputa física pela bola",cat:"termo"},
+  {word:"MARCA",hint:"Pressionar o adversário de perto",cat:"termo"},
+  {word:"RITMO",hint:"Cadência e velocidade do jogo",cat:"termo"},
+  {word:"SAIDA",hint:"___ de bola pelo goleiro ou defesa",cat:"termo"},
+  {word:"CALMA",hint:"O técnico pediu ___ ao elenco",cat:"termo"},
+  {word:"CHUVA",hint:"Jogo na ___ deixa o campo pesado",cat:"termo"},
+  {word:"GOLPE",hint:"Batida certeira a gol",cat:"termo"},
+  {word:"PALCO",hint:"O estádio é o ___ do futebol",cat:"termo"},
+  {word:"VIROU",hint:"O time ___ o placar no segundo tempo",cat:"termo"},
+  {word:"ATACA",hint:"O time ___ em busca do gol",cat:"termo"},
+  {word:"PONTA",hint:"Atacante que joga pelas laterais do campo",cat:"termo"},
+  {word:"ZAGUE",hint:"Linha de defesa do time",cat:"termo"},
+  {word:"MEIAO",hint:"Jogador de meio-campo com função defensiva",cat:"termo"},
+  {word:"VASCO",hint:"Time carioca fundado em 1898, o Gigante da Colina",cat:"time",curio:"Fundado em 1898, foi pioneiro na luta contra o racismo no futebol brasileiro."},
+  {word:"BAHIA",hint:"Time baiano, o Esquadrão de Aço",cat:"time",curio:"Bicampeão brasileiro (1959 e 1988), é o maior campeão do Nordeste."},
+  {word:"SPORT",hint:"Time pernambucano, o Leão da Ilha",cat:"time",curio:"O Sport Recife foi campeão brasileiro em 1987."},
+  {word:"CEARA",hint:"Time cearense, o Vozão",cat:"time",curio:"Fundado em 1914, é um dos maiores clubes do Nordeste."},
+  {word:"MARTA",hint:"Maior jogadora da história do futebol brasileiro",cat:"jogador",curio:"Eleita seis vezes a melhor jogadora do mundo pela FIFA."},
+  {word:"NEVES",hint:"Sobrenome de grandes jogadores brasileiros",cat:"jogador"},
+  {word:"PEDRO",hint:"Atacante do Flamengo e da Seleção",cat:"jogador",curio:"Pedro é um dos principais artilheiros do Flamengo nos últimos anos."},
+  {word:"LUCAS",hint:"Nome de vários craques brasileiros",cat:"jogador"},
+  {word:"DIEGO",hint:"Meia habilidoso, nome clássico no futebol",cat:"jogador"},
+  {word:"OSCAR",hint:"Meia brasileiro que atuou no Chelsea",cat:"jogador",curio:"Oscar foi destaque do Brasil na Copa de 2014 antes de jogar na Europa e China."},
+  {word:"DAVID",hint:"Como em David Luiz, zagueiro da Seleção",cat:"jogador",curio:"David Luiz é conhecido pelo cabelo marcante e por jogar na zaga da Seleção."},
+  {word:"ARENA",hint:"Estádio moderno",cat:"termo"},
+  {word:"RIVAL",hint:"Time adversário",cat:"termo"},
+  {word:"VERDE",hint:"Cor do gramado e do Palmeiras",cat:"termo"},
+  {word:"RUBRO",hint:"Cor característica do Flamengo",cat:"termo"},
+  {word:"CLUBE",hint:"Agremiação esportiva",cat:"termo"},
+  {word:"SERIE",hint:"___ A, B ou C do Brasileirão",cat:"termo"},
+  {word:"GRUPO",hint:"Chave da fase de grupos de uma copa",cat:"termo"},
+  {word:"TABUS",hint:"Recorde invicto de um time sobre o outro",cat:"termo"},
+];
+
+const WORDS6 = [
+  // Termos do jogo
+  {word:"DEFESA",hint:"Setor responsável por proteger o gol",cat:"termo"},
+  {word:"ATAQUE",hint:"Setor responsável por marcar gols",cat:"termo"},
+  {word:"CARTAO",hint:"Punição do árbitro: amarelo ou vermelho",cat:"termo"},
+  {word:"CAMISA",hint:"A ___ do time é símbolo de identidade",cat:"termo"},
+  {word:"PLACAR",hint:"Marcava 2 a 1 no final do jogo",cat:"termo"},
+  {word:"CRUZAR",hint:"Enviar a bola de uma lateral para a área",cat:"termo"},
+  {word:"CABECA",hint:"Quando o gol é marcado de ___",cat:"termo"},
+  {word:"FALTAS",hint:"Infrações cometidas durante o jogo",cat:"termo"},
+  {word:"REBATE",hint:"Quando o goleiro defende e a bola volta",cat:"termo"},
+  {word:"VIRADA",hint:"Quando o time que perdia passa a ganhar",cat:"termo"},
+  {word:"TITULO",hint:"O ___ de campeão é o objetivo de todo time",cat:"termo"},
+  {word:"ESCAPE",hint:"Jogada individual para fugir da marcação",cat:"termo"},
+  {word:"ESPACO",hint:"Área livre no campo para o jogador receber",cat:"termo"},
+  {word:"TROCAR",hint:"___ de passes para manter a posse de bola",cat:"termo"},
+  {word:"PIVOTE",hint:"Jogador que gira de costas para o gol",cat:"termo"},
+  {word:"CONTRA",hint:"Gol ___ é quando a bola entra na própria meta",cat:"termo"},
+  {word:"SUBIDA",hint:"Quando o zagueiro sobe para cabecear",cat:"termo"},
+  {word:"CHUTES",hint:"Finalizações ao gol durante a partida",cat:"termo"},
+  {word:"CHAPEU",hint:"Quando a bola passa por cima do adversário",cat:"termo"},
+  {word:"FRANGO",hint:"Erro grave do goleiro ao defender",cat:"termo"},
+  {word:"SANTOS",hint:"Time do litoral paulista, o Peixe",cat:"time",curio:"Clube de Pelé, foi bicampeão mundial em 1962 e 1963."},
+  {word:"MELHOR",hint:"O ___ jogador do campeonato recebe o troféu",cat:"termo"},
+  {word:"TENSAO",hint:"A ___ cresce quando o jogo está empatado",cat:"termo"},
+  {word:"NUMERO",hint:"O ___ na camisa identifica o jogador",cat:"termo"},
+  {word:"TORCEU",hint:"O jogador ___ o tornozelo e saiu de campo",cat:"termo"},
+  {word:"PERDEU",hint:"O time ___ a partida por 2 a 0",cat:"termo"},
+  {word:"GANHOU",hint:"O time ___ a partida nos acréscimos",cat:"termo"},
+  {word:"TREINO",hint:"Sessão de preparação antes do jogo",cat:"termo"},
+  {word:"CANELA",hint:"Parte da perna protegida pela caneleira",cat:"termo"},
+  {word:"CABELO",hint:"Neymar é famoso pelos seus ___ exóticos",cat:"termo"},
+  {word:"TORCER",hint:"Apoiar o time favorito",cat:"termo"},
+].filter(w => w.word.length === 6 && /^[A-Z]+$/.test(w.word));
+
+const WORDS7 = [
+  {word:"JOGADOR",hint:"Atleta que participa de uma partida de futebol",cat:"termo"},
+  {word:"TECNICO",hint:"Profissional que comanda e escala o time",cat:"termo"},
+  {word:"ESTADIO",hint:"Local onde as partidas de futebol são disputadas",cat:"termo"},
+  {word:"RESERVA",hint:"Jogador que começa a partida no banco de suplentes",cat:"termo"},
+  {word:"CAPITAO",hint:"Líder do time em campo, usa a braçadeira",cat:"termo",curio:"O capitão é o único jogador autorizado a falar com o árbitro em algumas situações."},
+  {word:"PENALTI",hint:"Cobrança de onze metros após falta na área",cat:"termo",curio:"O pênalti é cobrado a 11 metros do gol, marca criada em 1891."},
+  {word:"EXPULSO",hint:"Jogador que recebe cartão vermelho e deixa o campo",cat:"termo"},
+  {word:"DRIBLAR",hint:"Passar pelo adversário com a bola dominada",cat:"termo"},
+  {word:"DISPUTA",hint:"Briga pela posse da bola entre dois jogadores",cat:"termo"},
+  {word:"TORCIDA",hint:"Conjunto de torcedores que apoiam um time",cat:"termo"},
+  {word:"LATERAL",hint:"Jogador que atua pelas laterais da defesa",cat:"termo"},
+  {word:"GOIANIA",hint:"Cidade que sedia o Goiás e o Atlético Goianiense",cat:"termo"},
+  {word:"PALPITE",hint:"Previsão sobre o resultado de uma partida",cat:"termo"},
+  {word:"CAMPEAO",hint:"Time que venceu o torneio ou campeonato",cat:"termo"},
+  {word:"TREINOS",hint:"Sessões de preparação antes dos jogos",cat:"termo"},
+  {word:"PREMIOS",hint:"Reconhecimentos dados aos melhores do campeonato",cat:"termo"},
+  {word:"COBRADO",hint:"Falta ___ com categoria pelo camisa 10",cat:"termo"},
+  {word:"MARCADO",hint:"Jogador bem ___ não consegue receber a bola",cat:"termo"},
+  {word:"ATACADO",hint:"Time ___ durante os 90 minutos pelo adversário",cat:"termo"},
+  {word:"PERDIDO",hint:"Gol ___ que teria mudado o resultado do jogo",cat:"termo"},
+  {word:"EMPATAR",hint:"Terminar a partida com o mesmo placar",cat:"termo"},
+  {word:"VETERAO",hint:"Jogador experiente com muitos anos de carreira",cat:"termo"},
+  {word:"JUVENIL",hint:"Categoria de base para jovens jogadores",cat:"termo"},
+  {word:"DESVIAR",hint:"Mudar a trajetória da bola com o corpo",cat:"termo"},
+  {word:"LIBERAR",hint:"O árbitro libera o jogo após o toque",cat:"termo"},
+  {word:"DOMINAR",hint:"Controlar a bola com precisão antes de passar",cat:"termo"},
+].filter(w => w.word.length === 7 && /^[A-Z]+$/.test(w.word));
+
+const VALID5 = new Set([...WORDS5.map(w=>w.word),"BOLAS","JOGOS","FORTE","BRAVO","VOLTA","VELOZ","FRACO","JUNTO","OUTRO","POUCO","QUEDA","SALVA","SINAL","VENTO","PESO","RISCO","NOITE","OLHAR","MANGA","MEDIA","MUNDO","NUNCA","NORTE","CARTA","CERTO","PERDA","PALMA","MOTOR","LARGO","LENTO","PLANO","PRAZO","VISTA","APOIO","GERAL","REGRA"]);
+const VALID6 = new Set([...WORDS6.map(w=>w.word),"CORRER","ATACAR","MARCAR","PASSAR","CABECA","CHAPEU","FRANGO","REBATE","CHUTES","FALTAS","PERNAS","CAMPOS","CLUBES","TEMPOS","GRUPOS","SERIES","RIVAIS","VERDES","TITULOS"]);
+const VALID7 = new Set([...WORDS7.map(w=>w.word),"JOGANDO","MARCADO","ATACADO","PASSADO","CORRIDO","CHUTADO","DRIBLOU","ESCALOU","TREINOU","PERDIDO","GANHOU","EMPATOU"]);
+
+// ── DATE SEED ───────────────────────────────────────────────
+const EPOCH = new Date("2025-01-01");
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
+function dayIndex() {
+  const d = new Date(); d.setHours(0,0,0,0);
+  return Math.floor((d - EPOCH) / 86400000);
+}
+function wordOfDay(list) {
+  const idx = dayIndex() % list.length;
+  return list[idx];
+}
+
+// ── STATE ───────────────────────────────────────────────────
+const LEVELS = [
+  { size: 5, list: WORDS5, valid: VALID5, tries: 6 },
+  { size: 6, list: WORDS6, valid: VALID6, tries: 6 },
+  { size: 7, list: WORDS7, valid: VALID7, tries: 6 },
+];
+
+let curLevel = 0;
+let levelState = [null, null, null]; // per level: {won, lost, guesses, emojiGrid}
+let activeGame = null; // {secret, hint, board, curRow, curCol, gameOver, keyStates, emojiGrid}
+let mode = "daily"; // "daily" | "free"
+let soundOn = true;
+
+// Stats from localStorage
+let stats = { streak: 0, best: 0, wins: 0, played: 0, dist: [0,0,0,0,0,0], achievements: {} };
+
+function loadStats() {
+  try {
+    const s = JSON.parse(localStorage.getItem("futword_stats") || "{}");
+    stats = {
+      streak: s.streak||0, best: s.best||0, wins: s.wins||0, played: s.played||0,
+      dist: s.dist || [0,0,0,0,0,0], achievements: s.achievements || {}
+    };
+    const last = s.lastDay || "";
+    const today = todayKey();
+    if (last !== today) {
+      const yesterday = (() => { const d=new Date(); d.setDate(d.getDate()-1); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; })();
+      if (last !== yesterday && last !== "") stats.streak = 0;
+    }
+    soundOn = s.soundOn !== false;
+  } catch(e) {}
+}
+
+function saveStats() {
+  localStorage.setItem("futword_stats", JSON.stringify({ ...stats, lastDay: todayKey(), soundOn }));
+}
+
+function loadDayProgress() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("futword_day_" + todayKey()) || "null");
+    if (saved) levelState = saved;
+  } catch(e) {}
+}
+
+function saveDayProgress() {
+  localStorage.setItem("futword_day_" + todayKey(), JSON.stringify(levelState));
+}
+
+// Ensure a day's win/loss is only added to stats once (even across refreshes)
+function dailyCounted() {
+  try { return localStorage.getItem("futword_counted_" + todayKey()) === "1"; }
+  catch(e) { return false; }
+}
+function markDailyCounted() {
+  try { localStorage.setItem("futword_counted_" + todayKey(), "1"); } catch(e) {}
+}
+
+function updateStatsUI() {
+  document.getElementById("stat-streak").textContent = stats.streak;
+  document.getElementById("stat-best").textContent   = stats.best;
+  document.getElementById("stat-wins").textContent   = stats.wins;
+  document.getElementById("stat-played").textContent = stats.played;
+}
+
+// ── LEVEL NAV ───────────────────────────────────────────────
+function updateLevelNav() {
+  LEVELS.forEach((_, i) => {
+    const btn = document.getElementById("lvl-" + i);
+    const dots = document.getElementById("dots-" + i);
+    btn.className = "lvl-btn";
+    const st = levelState[i];
+
+    if (st && st.done) {
+      btn.classList.add(i === curLevel ? "active done" : "done");
+      dots.innerHTML = st.won ? "✓" : "✗";
+    } else if (i === 0 || (levelState[i-1] && levelState[i-1].done)) {
+      btn.classList.add(i === curLevel ? "active" : "");
+      // build attempt dots
+      const tries = st ? st.guesses : 0;
+      dots.innerHTML = "";
+      for (let d = 0; d < LEVELS[i].tries; d++) {
+        const dot = document.createElement("div");
+        dot.className = "lvl-dot";
+        if (st && d < tries) dot.style.background = st.won && d === tries-1 ? "var(--correct)" : "var(--absent)";
+        dots.appendChild(dot);
+      }
+    } else {
+      btn.classList.add("locked");
+      dots.innerHTML = '<span class="lvl-lock">🔒</span>';
+    }
+  });
+}
+
+function selectLevel(i) {
+  // locked?
+  if (i > 0 && !(levelState[i-1] && levelState[i-1].done)) {
+    showToast("Complete a fase " + (i) + " primeiro!");
+    return;
+  }
+  curLevel = i;
+  updateLevelNav();
+  renderLevel();
+}
+
+// ── RENDER LEVEL ────────────────────────────────────────────
+function renderLevel() {
+  const st = levelState[curLevel];
+  const gameArea = document.getElementById("game-area");
+  const lockedMsg = document.getElementById("locked-msg");
+  const completedScreen = document.getElementById("completed-screen");
+  const kb = document.getElementById("keyboard");
+
+  completedScreen.style.display = "none";
+  lockedMsg.style.display = "none";
+  gameArea.style.display = "flex";
+  gameArea.style.flexDirection = "column";
+  gameArea.style.alignItems = "center";
+  gameArea.style.width = "100%";
+  kb.style.display = "flex";
+
+  // All 3 done?
+  if (levelState.every(s => s && s.done)) {
+    gameArea.style.display = "none";
+    kb.style.display = "none";
+    showCompletedScreen();
+    return;
+  }
+
+  if (st && st.done) {
+    // Already finished this level — show result, no keyboard
+    restoreFinishedLevel(st);
+    return;
+  }
+
+  // Start fresh game for this level
+  startGame();
+}
+
+function restoreFinishedLevel(st) {
+  const lv = LEVELS[curLevel];
+  buildBoard(lv.size, lv.tries);
+
+  // Replay guesses
+  st.rows.forEach((guess, r) => {
+    const result = scoreGuess(guess, st.secret, lv.size);
+    for (let c = 0; c < lv.size; c++) {
+      const tile = document.getElementById(`t-${r}-${c}`);
+      tile.textContent = guess[c];
+      tile.classList.add(result[c]);
+    }
+  });
+
+  const msg = document.getElementById("message");
+  const hint = document.getElementById("hint-box");
+  if (st.won) {
+    msg.textContent = "⚽ Acertou!";
+    msg.className = "win";
+  } else {
+    msg.textContent = "A palavra era: " + st.secret;
+    msg.className = "lose";
+    if (st.hint) hint.textContent = "💡 " + st.hint;
+  }
+
+  document.getElementById("btn-row").style.display = "flex";
+  const nextBtn = document.getElementById("next-level");
+  nextBtn.onclick = goNextLevel;
+  if (curLevel < 2) {
+    nextBtn.textContent = "PRÓXIMA FASE →";
+    nextBtn.style.display = "inline-block";
+  } else {
+    nextBtn.style.display = "none";
+  }
+  document.getElementById("keyboard").style.display = "none";
+}
+
+function startGame() {
+  const lv = LEVELS[curLevel];
+  const entry = wordOfDay(lv.list);
+
+  activeGame = {
+    secret:   entry.word,
+    hint:     entry.hint || "",
+    curio:    entry.curio || "",
+    size:     lv.size,
+    tries:    lv.tries,
+    curRow:   0,
+    curCol:   0,
+    gameOver: false,
+    keyStates: {},
+    emojiGrid: [],
+    rows: [],
+  };
+
+  buildBoard(lv.size, lv.tries);
+  buildKeyboard();
+  document.getElementById("curio-box").style.display = "none";
+  document.getElementById("message").textContent = "";
+  document.getElementById("message").className = "";
+  document.getElementById("hint-box").textContent = "";
+  document.getElementById("btn-row").style.display = "none";
+  document.getElementById("keyboard").style.display = "flex";
+}
+
+// ── BOARD ───────────────────────────────────────────────────
+function buildBoard(size, tries) {
+  const b = document.getElementById("board");
+  b.innerHTML = "";
+  // Adjust tile size for 6/7 letters
+  const tileSize = size <= 5 ? 52 : size === 6 ? 46 : 40;
+  const fontSize = size <= 5 ? 24 : size === 6 ? 20 : 18;
+
+  for (let r = 0; r < tries; r++) {
+    const row = document.createElement("div");
+    row.className = "row";
+    for (let c = 0; c < size; c++) {
+      const t = document.createElement("div");
+      t.className = "tile";
+      t.id = `t-${r}-${c}`;
+      t.style.width = tileSize + "px";
+      t.style.height = tileSize + "px";
+      t.style.fontSize = fontSize + "px";
+      row.appendChild(t);
+    }
+    b.appendChild(row);
+  }
+}
+
+// ── KEYBOARD ────────────────────────────────────────────────
+const KB_ROWS = [
+  ["Q","W","E","R","T","Y","U","I","O","P"],
+  ["A","S","D","F","G","H","J","K","L"],
+  ["ENTER","Z","X","C","V","B","N","M","DEL"]
+];
+
+function buildKeyboard() {
+  const kb = document.getElementById("keyboard");
+  kb.innerHTML = "";
+  KB_ROWS.forEach(keys => {
+    const div = document.createElement("div");
+    div.className = "kb-row";
+    keys.forEach(k => {
+      const btn = document.createElement("button");
+      btn.className = "key" + (k.length > 1 ? " wide" : "");
+      btn.textContent = k === "DEL" ? "⌫" : k;
+      btn.dataset.key = k;
+      btn.addEventListener("click", () => handleKey(k));
+      div.appendChild(btn);
+    });
+    kb.appendChild(div);
+  });
+}
+
+// ── INPUT ───────────────────────────────────────────────────
+function handleKey(k) {
+  if (!activeGame || activeGame.gameOver) return;
+  const g = activeGame;
+  if (k === "DEL" || k === "BACKSPACE") {
+    if (g.curCol > 0) {
+      g.curCol--;
+      const t = document.getElementById(`t-${g.curRow}-${g.curCol}`);
+      t.textContent = "";
+      t.classList.remove("filled");
+    }
+  } else if (k === "ENTER") {
+    submitGuess();
+  } else if (/^[A-Z]$/.test(k) && g.curCol < g.size) {
+    const t = document.getElementById(`t-${g.curRow}-${g.curCol}`);
+    t.textContent = k;
+    t.classList.add("filled");
+    g.curCol++;
+    playSound("key");
+  }
+}
+
+function getGuess() {
+  const g = activeGame;
+  return Array.from({length: g.size}, (_, i) => document.getElementById(`t-${g.curRow}-${i}`).textContent).join("");
+}
+
+function submitGuess() {
+  const g = activeGame;
+  if (g.curCol < g.size) { showToast("Complete a palavra!"); return; }
+  const guess = getGuess();
+  const lv = LEVELS[curLevel];
+  if (!lv.valid.has(guess)) { showToast("Palavra não reconhecida"); return; }
+
+  const result = scoreGuess(guess, g.secret, g.size);
+  const emojis = result.map(r => r==="correct"?"🟩":r==="present"?"🟨":"⬛");
+  g.emojiGrid.push(emojis.join(""));
+  g.rows.push(guess);
+
+  result.forEach((state, i) => {
+    setTimeout(() => {
+      const t = document.getElementById(`t-${g.curRow}-${i}`);
+      t.classList.add("reveal", state);
+    }, i * 80);
+    const prev = g.keyStates[guess[i]];
+    if (prev !== "correct") {
+      if (state === "correct" || prev !== "present") g.keyStates[guess[i]] = state;
+    }
+  });
+  setTimeout(() => updateKeyboard(), g.size * 80 + 100);
+
+  if (guess === g.secret) {
+    g.gameOver = true;
+    setTimeout(() => onLevelEnd(true, g.curRow + 1), g.size * 80 + 200);
+    return;
+  }
+
+  g.curRow++; g.curCol = 0;
+  if (g.curRow === g.tries) {
+    g.gameOver = true;
+    setTimeout(() => onLevelEnd(false, g.tries), g.size * 80 + 200);
+  }
+}
+
+function scoreGuess(guess, secret, size) {
+  const result = Array(size).fill("absent");
+  const sArr = secret.split(""), gArr = guess.split(""), used = Array(size).fill(false);
+  for (let i = 0; i < size; i++) {
+    if (gArr[i] === sArr[i]) { result[i]="correct"; used[i]=true; gArr[i]=null; }
+  }
+  for (let i = 0; i < size; i++) {
+    if (result[i]==="correct") continue;
+    for (let j = 0; j < size; j++) {
+      if (!used[j] && gArr[i]===sArr[j]) { result[i]="present"; used[j]=true; break; }
+    }
+  }
+  return result;
+}
+
+function updateKeyboard() {
+  const g = activeGame;
+  if (!g) return;
+  document.querySelectorAll(".key").forEach(btn => {
+    const k = btn.dataset.key;
+    if (g.keyStates[k]) {
+      btn.className = "key" + (k && k.length > 1 ? " wide" : "") + " " + g.keyStates[k];
+    }
+  });
+}
+
+// ── LEVEL END ───────────────────────────────────────────────
+function onLevelEnd(won, triesUsed) {
+  const g = activeGame;
+  const msgs = {
+    win:  ["⚽ Gol! Você acertou!", "🎯 Que chute certeiro!", "🏆 Perfeito! É gol!"],
+    lose: ["Fim de jogo!", "Quase lá — tente amanhã!", "O goleiro pegou essa!"],
+  };
+  const el = document.getElementById("message");
+  const hintEl = document.getElementById("hint-box");
+
+  if (won) {
+    el.textContent = msgs.win[Math.floor(Math.random()*msgs.win.length)];
+    el.className = "win";
+    playSound("win");
+    fireConfetti();
+  } else {
+    el.textContent = "A palavra era: " + g.secret;
+    el.className = "lose";
+    if (g.hint) hintEl.textContent = "💡 " + g.hint;
+    playSound("lose");
+  }
+
+  showCuriosity(g.secret, g.curio);
+
+  // CHALLENGE MODE (friend link): standalone, no daily state
+  if (mode === "challenge") {
+    const el2 = document.getElementById("message");
+    if (won) el2.textContent = "⚽ Você venceu o desafio em " + triesUsed + "/6!";
+    else el2.textContent = "Não foi dessa vez! A palavra era: " + g.secret;
+    document.getElementById("btn-row").style.display = "flex";
+    document.getElementById("keyboard").style.display = "none";
+    document.getElementById("share-btn").style.display = "inline-block";
+    const nb = document.getElementById("next-level");
+    nb.textContent = "JOGAR O DO DIA →";
+    nb.style.display = "inline-block";
+    nb.onclick = () => { location.hash = ""; location.reload(); };
+    return;
+  }
+
+  // FREE MODE: don't touch daily state or stats
+  if (mode === "free") {
+    document.getElementById("btn-row").style.display = "flex";
+    document.getElementById("keyboard").style.display = "none";
+    const nb = document.getElementById("next-level");
+    nb.textContent = "NOVA PALAVRA ↻";
+    nb.style.display = "inline-block";
+    nb.onclick = startFreeGame;
+    checkAchievements({ won, triesUsed, size: g.size, mode: "free" });
+    return;
+  }
+
+  // Save level state
+  levelState[curLevel] = {
+    done: true, won, secret: g.secret, hint: g.hint,
+    guesses: triesUsed, rows: g.rows, emojiGrid: g.emojiGrid,
+  };
+  saveDayProgress();
+
+  // Track tries distribution on every level win (all sizes)
+  if (won) {
+    stats.dist = stats.dist || [0,0,0,0,0,0];
+    stats.dist[triesUsed - 1]++;
+  }
+
+  // The daily "result" is decided when: (a) you lose any level, or
+  // (b) you win the final level (level 2). Count exactly once per day.
+  const dailyEnded = !won || curLevel === 2;
+  if (dailyEnded && !dailyCounted()) {
+    markDailyCounted();
+    stats.played++;
+    const wonAll = [0,1,2].every(i => levelState[i] && levelState[i].won);
+    if (wonAll) {
+      stats.wins++;
+      stats.streak++;
+      stats.best = Math.max(stats.best, stats.streak);
+    } else {
+      stats.streak = 0;
+    }
+  }
+  saveStats();
+  updateStatsUI();
+
+  checkAchievements({ won, triesUsed, size: g.size, mode: "daily", allDone: levelState.every(s => s && s.done) });
+
+  updateLevelNav();
+
+  const nextBtn = document.getElementById("next-level");
+  nextBtn.onclick = goNextLevel;
+  document.getElementById("btn-row").style.display = "flex";
+  document.getElementById("keyboard").style.display = "none";
+
+  if (curLevel < 2 && won) {
+    nextBtn.textContent = "PRÓXIMA FASE →";
+    nextBtn.style.display = "inline-block";
+  } else {
+    nextBtn.style.display = "none";
+  }
+
+  // Check all done
+  if (levelState.every(s => s && s.done)) {
+    setTimeout(() => {
+      document.getElementById("game-area").style.display = "none";
+      showCompletedScreen();
+    }, 1500);
+  }
+}
+
+function goNextLevel() {
+  if (curLevel < 2) selectLevel(curLevel + 1);
+}
+
+// ── COMPLETED ───────────────────────────────────────────────
+function showCompletedScreen() {
+  const screen = document.getElementById("completed-screen");
+  screen.style.display = "flex";
+  updateLevelNav();
+
+  // Build emoji summary
+  const lines = [];
+  levelState.forEach((st, i) => {
+    if (!st) return;
+    const tag = ["5️⃣","6️⃣","7️⃣"][i];
+    if (st.won) {
+      lines.push(tag + " " + st.emojiGrid.join(" "));
+    } else {
+      lines.push(tag + " ✗");
+    }
+  });
+  document.getElementById("completed-emoji").textContent = lines.join("\n");
+}
+
+function buildShareText() {
+  const di = dayIndex();
+  const lines = [`⚽ FutWord — Desafio #${di}`];
+  levelState.forEach((st, i) => {
+    if (!st) return;
+    const label = ["5️⃣","6️⃣","7️⃣"][i];
+    const tries = st.won ? `${st.guesses}/6` : "X/6";
+    lines.push(`\n${label} ${tries}`);
+    if (st.emojiGrid) lines.push(st.emojiGrid.join("\n"));
+  });
+  lines.push("\nJogue em: futword.com.br");
+  return lines.join("\n");
+}
+
+function shareLevel() {
+  const g = activeGame;
+  if (!g) return;
+  if (mode === "challenge") {
+    const sizeTag = { 5:"5️⃣", 6:"6️⃣", 7:"7️⃣" }[g.size] || "⚽";
+    const won = g.gameOver && g.rows[g.rows.length-1] === g.secret;
+    const tries = won ? `${g.rows.length}/6` : "X/6";
+    const text = `⚽ FutWord · Desafio de amigo ${sizeTag} ${tries}\n\n${g.emojiGrid.join("\n")}`;
+    doShare(text);
+    return;
+  }
+  if (mode === "free") {
+    const sizeTag = { 5:"5️⃣", 6:"6️⃣", 7:"7️⃣" }[g.size] || "⚽";
+    const won = g.gameOver && g.rows[g.rows.length-1] === g.secret;
+    const tries = won ? `${g.rows.length}/6` : "X/6";
+    const text = `⚽ FutWord · Modo Livre ${sizeTag} ${tries}\n\n${g.emojiGrid.join("\n")}\n\nJogue em: futword.com.br`;
+    doShare(text);
+    return;
+  }
+  const st = levelState[curLevel];
+  if (!st) return;
+  const di = dayIndex();
+  const label = ["5️⃣","6️⃣","7️⃣"][curLevel];
+  const tries = st.won ? `${st.guesses}/6` : "X/6";
+  const text = `⚽ FutWord #${di} ${label} ${tries}\n\n${st.emojiGrid.join("\n")}\n\nJogue em: futword.com.br`;
+  doShare(text);
+}
+
+function shareFinal() { doShare(buildShareText()); }
+
+function doShare(text) {
+  if (navigator.share) {
+    navigator.share({ text }).catch(() => copyText(text));
+  } else {
+    copyText(text);
+  }
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => showToast("Resultado copiado!"));
+}
+
+// ── TOAST ───────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+// ── KEYBOARD EVENTS ─────────────────────────────────────────
+document.addEventListener("keydown", e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toUpperCase();
+  if (k === "ENTER") handleKey("ENTER");
+  else if (k === "BACKSPACE") handleKey("DEL");
+  else if (/^[A-Z]$/.test(k)) handleKey(k);
+});
+
+// ── SOUND (Web Audio, no files) ─────────────────────────────
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  }
+  return audioCtx;
+}
+function beep(freq, dur, type, vol, delay) {
+  const ctx = getAudio();
+  if (!ctx) return;
+  const t = ctx.currentTime + (delay || 0);
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type || "sine";
+  osc.frequency.setValueAtTime(freq, t);
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(vol || 0.15, t + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(t); osc.stop(t + dur);
+}
+function playSound(kind) {
+  if (!soundOn) return;
+  if (kind === "key")  beep(220, 0.05, "square", 0.04);
+  else if (kind === "win")  { [523,659,784,1047].forEach((f,i) => beep(f, 0.3, "triangle", 0.18, i*0.1)); }
+  else if (kind === "lose") { beep(200, 0.4, "sawtooth", 0.12); beep(150, 0.5, "sawtooth", 0.1, 0.15); }
+  else if (kind === "tick") beep(440, 0.06, "sine", 0.08);
+}
+function toggleSound() {
+  soundOn = !soundOn;
+  const btn = document.getElementById("btn-sound");
+  btn.textContent = soundOn ? "🔊" : "🔇";
+  btn.classList.toggle("off", !soundOn);
+  saveStats();
+  if (soundOn) playSound("tick");
+}
+
+// ── CONFETTI ────────────────────────────────────────────────
+function fireConfetti() {
+  const container = document.getElementById("confetti");
+  const colors = ["#d4a017","#2d7a2d","#c8f0c8","#ffd970","#f0f4f0"];
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement("div");
+    p.className = "confetti-piece";
+    p.style.left = Math.random()*100 + "%";
+    p.style.background = colors[Math.floor(Math.random()*colors.length)];
+    p.style.borderRadius = Math.random() > 0.5 ? "50%" : "1px";
+    const dur = 1.6 + Math.random()*1.6;
+    const xDrift = (Math.random()-0.5)*200;
+    const rot = Math.random()*720;
+    p.animate([
+      { transform: `translate(0,0) rotate(0deg)`, opacity: 1 },
+      { transform: `translate(${xDrift}px, ${window.innerHeight + 40}px) rotate(${rot}deg)`, opacity: 0.9 }
+    ], { duration: dur*1000, easing: "cubic-bezier(0.2,0.6,0.4,1)" });
+    container.appendChild(p);
+    setTimeout(() => p.remove(), dur*1000);
+  }
+}
+
+// ── MODE SWITCH ─────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  document.getElementById("mode-daily").classList.toggle("active", m === "daily");
+  document.getElementById("mode-free").classList.toggle("active", m === "free");
+  document.getElementById("level-nav").style.display = m === "daily" ? "flex" : "none";
+  document.getElementById("cat-filter").style.display = m === "free" ? "flex" : "none";
+  document.getElementById("completed-screen").style.display = "none";
+  document.getElementById("challenge-num").textContent = m === "daily" ? ("DESAFIO #" + dayIndex()) : "MODO LIVRE";
+  document.querySelector(".tagline").textContent = m === "daily" ? "Palavra do dia" : "Jogue à vontade";
+
+  if (m === "free") {
+    startFreeGame();
+  } else {
+    curLevel = 0;
+    updateLevelNav();
+    renderLevel();
+  }
+}
+
+let freeCategory = "todos";
+function setCategory(cat) {
+  freeCategory = cat;
+  document.querySelectorAll(".cat-chip").forEach(c => c.classList.toggle("active", c.dataset.cat === cat));
+  startFreeGame();
+}
+
+function startFreeGame() {
+  // Pool respects category filter across all levels
+  let pool = [];
+  LEVELS.forEach((lv, idx) => {
+    lv.list.forEach(w => {
+      if (freeCategory === "todos" || (w.cat || "termo") === freeCategory) {
+        pool.push({ ...w, lvIdx: idx });
+      }
+    });
+  });
+  if (!pool.length) { showToast("Sem palavras nessa categoria"); return; }
+
+  const entry = pool[Math.floor(Math.random() * pool.length)];
+  curLevel = entry.lvIdx;
+  const lv = LEVELS[entry.lvIdx];
+
+  activeGame = {
+    secret: entry.word, hint: entry.hint || "", curio: entry.curio || "",
+    size: lv.size, tries: lv.tries,
+    curRow: 0, curCol: 0, gameOver: false, keyStates: {}, emojiGrid: [], rows: [],
+  };
+
+  document.getElementById("game-area").style.display = "flex";
+  document.getElementById("game-area").style.flexDirection = "column";
+  document.getElementById("game-area").style.alignItems = "center";
+  document.getElementById("completed-screen").style.display = "none";
+  document.getElementById("locked-msg").style.display = "none";
+  document.getElementById("curio-box").style.display = "none";
+
+  buildBoard(lv.size, lv.tries);
+  buildKeyboard();
+  const catLabel = { todos:"", termo:"⚽ Termo", time:"🛡 Time", jogador:"👤 Jogador" }[freeCategory];
+  document.getElementById("message").textContent = "Modo livre · " + lv.size + " letras" + (catLabel ? " · " + catLabel : "");
+  document.getElementById("message").className = "";
+  document.getElementById("hint-box").textContent = "";
+  document.getElementById("btn-row").style.display = "none";
+  document.getElementById("keyboard").style.display = "flex";
+}
+
+// ── ACHIEVEMENTS ────────────────────────────────────────────
+const ACHIEVEMENTS = [
+  { id: "first_win",  icon: "⚽", name: "Primeiro gol",    desc: "Acerte sua primeira palavra" },
+  { id: "hole_in_one",icon: "🎯", name: "De primeira",     desc: "Acerte na 1ª tentativa" },
+  { id: "hat_trick",  icon: "🏆", name: "Hat-trick",       desc: "Complete os 3 níveis no mesmo dia" },
+  { id: "streak3",    icon: "🔥", name: "Embalado",        desc: "Sequência de 3 dias" },
+  { id: "streak7",    icon: "⭐", name: "Artilheiro",      desc: "Sequência de 7 dias" },
+  { id: "no_miss",    icon: "🧤", name: "Sem sustos",      desc: "Vença sem nenhuma letra errada" },
+  { id: "seven_letter",icon:"💎", name: "Craque",          desc: "Acerte uma palavra de 7 letras" },
+  { id: "free_10",    icon: "♾️", name: "Maratonista",     desc: "Vença 10 vezes no modo livre" },
+];
+
+function checkAchievements(ctx) {
+  const a = stats.achievements;
+  const newly = [];
+  function unlock(id) { if (!a[id]) { a[id] = true; newly.push(id); } }
+
+  if (ctx.won) unlock("first_win");
+  if (ctx.won && ctx.triesUsed === 1) unlock("hole_in_one");
+  if (ctx.won && ctx.size === 7) unlock("seven_letter");
+  if (ctx.allDone && [0,1,2].every(i => levelState[i] && levelState[i].won)) unlock("hat_trick");
+  if (stats.streak >= 3) unlock("streak3");
+  if (stats.streak >= 7) unlock("streak7");
+
+  // "No miss" = won and every guessed letter was used in the word (no absent tiles)
+  if (ctx.won && activeGame) {
+    const hadAbsent = Object.values(activeGame.keyStates).includes("absent");
+    if (!hadAbsent) unlock("no_miss");
+  }
+
+  // Free mode wins counter
+  if (ctx.mode === "free" && ctx.won) {
+    stats.freeWins = (stats.freeWins || 0) + 1;
+    if (stats.freeWins >= 10) unlock("free_10");
+  }
+
+  saveStats();
+  if (newly.length) {
+    newly.forEach((id, i) => {
+      const ach = ACHIEVEMENTS.find(x => x.id === id);
+      setTimeout(() => showToast(ach.icon + " Conquista: " + ach.name), 600 + i*1400);
+    });
+  }
+}
+
+// ── MODAL ───────────────────────────────────────────────────
+function openModal(html) {
+  document.getElementById("modal-content").innerHTML = html;
+  document.getElementById("modal-overlay").classList.add("show");
+}
+function closeModal() { document.getElementById("modal-overlay").classList.remove("show"); }
+function closeModalBg(e) { if (e.target.id === "modal-overlay") closeModal(); }
+
+function openStats() {
+  const totalWins = stats.dist.reduce((a,b)=>a+b, 0);
+  const maxDist = Math.max(1, ...stats.dist);
+  let bars = "";
+  stats.dist.forEach((count, i) => {
+    const pct = Math.round((count / maxDist) * 100);
+    bars += `<div class="dist-row">
+      <div class="dist-label">${i+1}</div>
+      <div class="dist-bar-wrap"><div class="dist-bar ${count===0?'zero':''}" style="width:${Math.max(pct,8)}%">${count}</div></div>
+    </div>`;
+  });
+  const winRate = stats.played > 0 ? Math.round((stats.wins / stats.played) * 100) : 0;
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h2>📊 Estatísticas</h2>
+    <div style="display:flex;justify-content:space-around;margin-bottom:20px;text-align:center;">
+      <div><div style="font-family:'Bebas Neue';font-size:30px;color:var(--gold);">${stats.played}</div><div style="font-size:10px;color:var(--muted);">JOGADOS</div></div>
+      <div><div style="font-family:'Bebas Neue';font-size:30px;color:var(--gold);">${winRate}%</div><div style="font-size:10px;color:var(--muted);">VITÓRIAS</div></div>
+      <div><div style="font-family:'Bebas Neue';font-size:30px;color:var(--gold);">${stats.streak}</div><div style="font-size:10px;color:var(--muted);">SEQUÊNCIA</div></div>
+      <div><div style="font-family:'Bebas Neue';font-size:30px;color:var(--gold);">${stats.best}</div><div style="font-size:10px;color:var(--muted);">RECORDE</div></div>
+    </div>
+    <h2 style="font-size:16px;margin-bottom:10px;">Distribuição de tentativas</h2>
+    ${bars}
+  `);
+}
+
+function openAchievements() {
+  const unlocked = Object.keys(stats.achievements || {}).length;
+  let cards = "";
+  ACHIEVEMENTS.forEach(a => {
+    const on = stats.achievements && stats.achievements[a.id];
+    cards += `<div class="ach-card ${on?'unlocked':''}">
+      <div class="ach-icon">${a.icon}</div>
+      <div class="ach-name">${a.name}</div>
+      <div class="ach-desc">${on ? a.desc : '🔒 ' + a.desc}</div>
+    </div>`;
+  });
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h2>🏆 Conquistas (${unlocked}/${ACHIEVEMENTS.length})</h2>
+    <div class="ach-grid">${cards}</div>
+  `);
+}
+
+
+// ── THEME ───────────────────────────────────────────────────
+let lightTheme = false;
+function toggleTheme() {
+  lightTheme = !lightTheme;
+  document.body.classList.toggle("light", lightTheme);
+  document.getElementById("btn-theme").textContent = lightTheme ? "☀️" : "🌙";
+  document.querySelector('meta[name="theme-color"]').setAttribute("content", lightTheme ? "#eef3ea" : "#0a0f0a");
+  try { localStorage.setItem("futword_theme", lightTheme ? "light" : "dark"); } catch(e) {}
+}
+function loadTheme() {
+  try {
+    if (localStorage.getItem("futword_theme") === "light") { lightTheme = true; document.body.classList.add("light"); document.getElementById("btn-theme").textContent = "☀️"; }
+  } catch(e) {}
+}
+
+// ── CURIOSITY ───────────────────────────────────────────────
+function showCuriosity(word, curio) {
+  if (!curio) return;
+  const box = document.getElementById("curio-box");
+  box.innerHTML = `<span class="curio-tag">📚 ${word}</span>${curio}`;
+  box.style.display = "block";
+}
+
+// ── HELP ────────────────────────────────────────────────────
+function openHelp() {
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h2>❓ Como jogar</h2>
+    <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px;">
+      Descubra a palavra de futebol em até 6 tentativas. A cada palpite, as peças mudam de cor mostrando o quão perto você está.
+    </p>
+    <div class="help-row">
+      <div class="help-tiles">
+        <div class="help-tile correct">G</div><div class="help-tile">O</div><div class="help-tile">L</div>
+      </div>
+      <div class="help-text"><b>Verde:</b> letra certa, na posição certa.</div>
+    </div>
+    <div class="help-row">
+      <div class="help-tiles">
+        <div class="help-tile">C</div><div class="help-tile present">A</div><div class="help-tile">L</div>
+      </div>
+      <div class="help-text"><b>Amarelo:</b> a letra existe, mas em outra posição.</div>
+    </div>
+    <div class="help-row">
+      <div class="help-tiles">
+        <div class="help-tile">B</div><div class="help-tile absent">X</div><div class="help-tile">A</div>
+      </div>
+      <div class="help-text"><b>Cinza:</b> a letra não está na palavra.</div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);line-height:1.6;margin-top:14px;">
+      No <b style="color:var(--white);">Desafio do dia</b>, resolva 5 → 6 → 7 letras em sequência.
+      No <b style="color:var(--white);">Modo livre</b>, jogue à vontade e filtre por categoria.
+      Os acentos são preenchidos automaticamente.
+    </p>
+  `);
+}
+
+// ── IMAGE SHARE (canvas) ────────────────────────────────────
+function shareImage() {
+  const W = 600, pad = 40;
+  // Collect grids to render
+  let grids = [];
+  if (mode === "free" && activeGame) {
+    grids.push({ label: activeGame.size + " letras", emoji: activeGame.emojiGrid });
+  } else {
+    levelState.forEach((st, i) => {
+      if (st) grids.push({ label: ["5 letras","6 letras","7 letras"][i], emoji: st.emojiGrid, won: st.won });
+    });
+  }
+  if (!grids.length && activeGame) {
+    const st = levelState[curLevel];
+    if (st) grids.push({ label: activeGame.size + " letras", emoji: st.emojiGrid });
+  }
+
+  const rowsTotal = grids.reduce((a,g) => a + g.emoji.length + 1, 0);
+  const cell = 44, gap = 6;
+  const headerH = 150;
+  const H = headerH + rowsTotal * (cell + gap) + pad * 2 + grids.length * 20;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d");
+
+  // BG
+  ctx.fillStyle = lightTheme ? "#eef3ea" : "#080d08";
+  ctx.fillRect(0, 0, W, H);
+  // glow
+  const grad = ctx.createRadialGradient(W/2, 0, 0, W/2, 0, W);
+  grad.addColorStop(0, "rgba(45,122,45,0.25)");
+  grad.addColorStop(1, "transparent");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, 300);
+
+  // Title
+  ctx.textAlign = "center";
+  ctx.fillStyle = lightTheme ? "#1a2e1a" : "#f0f4f0";
+  ctx.font = "bold 52px Arial";
+  ctx.fillText("⚽ FUTWORD", W/2, 70);
+  ctx.fillStyle = "#d4a017";
+  ctx.font = "bold 26px Arial";
+  const sub = mode === "free" ? "Modo Livre" : "Desafio #" + dayIndex();
+  ctx.fillText(sub, W/2, 110);
+
+  // Grids
+  let y = headerH;
+  const colors = { "🟩": "#2d7a2d", "🟨": "#8a6200", "⬛": lightTheme ? "#c2cdba" : "#1e261e" };
+  grids.forEach(g => {
+    ctx.fillStyle = lightTheme ? "#5a7a5a" : "#7a9a7a";
+    ctx.font = "bold 20px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText(g.label.toUpperCase(), pad, y);
+    y += 18;
+
+    g.emoji.forEach(rowStr => {
+      const cells = Array.from(rowStr);
+      const rowW = cells.length * (cell + gap) - gap;
+      let x = (W - rowW) / 2;
+      cells.forEach(em => {
+        ctx.fillStyle = colors[em] || "#1e261e";
+        roundRect(ctx, x, y, cell, cell, 6);
+        ctx.fill();
+        x += cell + gap;
+      });
+      y += cell + gap;
+    });
+    y += 14;
+  });
+
+  // Footer
+  ctx.fillStyle = lightTheme ? "#5a7a5a" : "#7a9a7a";
+  ctx.font = "18px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("futword.com.br", W/2, H - 24);
+
+  canvas.toBlob(blob => {
+    const file = new File([blob], "futword.png", { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], text: "⚽ FutWord" }).catch(() => downloadBlob(blob));
+    } else {
+      downloadBlob(blob);
+    }
+  }, "image/png");
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+
+function downloadBlob(blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "futword.png";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast("Imagem baixada!");
+}
+
+// ── CHALLENGE BY LINK ───────────────────────────────────────
+// Encode a word into a URL-safe token (base64 + light scramble so it's not plain text)
+function encodeChallenge(word, size) {
+  const payload = JSON.stringify({ w: word, s: size, v: 1 });
+  // base64 then make URL-safe
+  return btoa(unescape(encodeURIComponent(payload))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+}
+function decodeChallenge(token) {
+  try {
+    let b64 = token.replace(/-/g,"+").replace(/_/g,"/");
+    while (b64.length % 4) b64 += "=";
+    const json = decodeURIComponent(escape(atob(b64)));
+    const obj = JSON.parse(json);
+    if (obj && obj.w && obj.s) return obj;
+  } catch(e) {}
+  return null;
+}
+
+function createChallengeLink() {
+  // Build modal: let user pick a word, or use a random one, and get a shareable link
+  let pool = [];
+  LEVELS.forEach((lv, idx) => lv.list.forEach(w => pool.push({ ...w, lvIdx: idx, size: lv.size })));
+
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h2>🔗 Desafiar um amigo</h2>
+    <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;">
+      Escolha o tamanho da palavra. Vamos sortear uma e gerar um link secreto — quem abrir joga exatamente essa palavra e pode comparar o resultado com você.
+    </p>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button class="cat-chip active" data-size="5" onclick="pickChallengeSize(5,this)">5 letras</button>
+      <button class="cat-chip" data-size="6" onclick="pickChallengeSize(6,this)">6 letras</button>
+      <button class="cat-chip" data-size="7" onclick="pickChallengeSize(7,this)">7 letras</button>
+    </div>
+    <button id="gen-link-btn" onclick="generateLink()" style="width:100%;padding:12px;background:var(--correct);border:none;border-radius:8px;color:var(--correct-text);font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;cursor:pointer;">SORTEAR E GERAR LINK</button>
+    <div id="link-result" style="display:none;margin-top:16px;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Link do desafio:</div>
+      <div id="link-text" style="background:var(--surface2);border:0.5px solid var(--border-light);border-radius:8px;padding:10px;font-size:11px;color:var(--white);word-break:break-all;margin-bottom:10px;"></div>
+      <button onclick="copyChallengeLink()" style="width:100%;padding:10px;background:transparent;border:0.5px solid var(--gold-dim);border-radius:8px;color:var(--gold);font-size:13px;cursor:pointer;">Copiar link 📋</button>
+    </div>
+  `);
+}
+
+let challengeSize = 5;
+let generatedLink = "";
+function pickChallengeSize(s, btn) {
+  challengeSize = s;
+  document.querySelectorAll('[data-size]').forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+}
+function generateLink() {
+  const lv = LEVELS[challengeSize - 5];
+  const entry = lv.list[Math.floor(Math.random() * lv.list.length)];
+  const token = encodeChallenge(entry.word, challengeSize);
+  const base = location.origin + location.pathname;
+  generatedLink = base + "#d=" + token;
+  document.getElementById("link-text").textContent = generatedLink;
+  document.getElementById("link-result").style.display = "block";
+}
+function copyChallengeLink() {
+  if (navigator.share) {
+    navigator.share({ text: "⚽ Te desafiei no FutWord! Consegue acertar?\n" + generatedLink }).catch(() => copyText(generatedLink));
+  } else {
+    copyText(generatedLink);
+  }
+}
+
+function checkLinkChallenge() {
+  const hash = location.hash;
+  const m = hash.match(/[#&]d=([^&]+)/);
+  if (!m) return false;
+  const obj = decodeChallenge(m[1]);
+  if (!obj) return false;
+
+  // Start a special challenge game
+  mode = "challenge";
+  const lvIdx = obj.s - 5;
+  if (lvIdx < 0 || lvIdx > 2) return false;
+  curLevel = lvIdx;
+  const lv = LEVELS[lvIdx];
+
+  // Find hint/curio if word is in our list
+  const known = lv.list.find(w => w.word === obj.w);
+
+  activeGame = {
+    secret: obj.w, hint: known ? known.hint : "", curio: known ? (known.curio||"") : "",
+    size: obj.s, tries: lv.tries,
+    curRow: 0, curCol: 0, gameOver: false, keyStates: {}, emojiGrid: [], rows: [],
+  };
+
+  // UI: hide daily-specific chrome
+  document.getElementById("level-nav").style.display = "none";
+  document.getElementById("cat-filter").style.display = "none";
+  document.getElementById("mode-tabs").style.display = "none";
+  document.getElementById("completed-screen").style.display = "none";
+  document.getElementById("challenge-num").textContent = "DESAFIO DE AMIGO";
+  document.querySelector(".tagline").textContent = obj.s + " letras";
+
+  document.getElementById("game-area").style.display = "flex";
+  document.getElementById("game-area").style.flexDirection = "column";
+  document.getElementById("game-area").style.alignItems = "center";
+
+  buildBoard(lv.size, lv.tries);
+  buildKeyboard();
+  document.getElementById("message").textContent = "🔗 Alguém te desafiou!";
+  document.getElementById("message").className = "";
+  document.getElementById("hint-box").textContent = "";
+  document.getElementById("curio-box").style.display = "none";
+  document.getElementById("btn-row").style.display = "none";
+  document.getElementById("keyboard").style.display = "flex";
+  return true;
+}
+
+// ── PWA ─────────────────────────────────────────────────────
+function setupPWA() {
+  // Build manifest as data URI
+  const manifest = {
+    name: "FutWord — Jogo de palavras do futebol",
+    short_name: "FutWord",
+    description: "Adivinhe a palavra de futebol em 6 tentativas",
+    start_url: ".",
+    display: "standalone",
+    background_color: "#080d08",
+    theme_color: "#080d08",
+    orientation: "portrait",
+    icons: [
+      { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23080d08'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle'%3E%E2%9A%BD%3C/text%3E%3C/svg%3E", sizes: "any", type: "image/svg+xml", purpose: "any" }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  document.getElementById("manifest-link").setAttribute("href", url);
+
+  // Service worker (offline caching) — only works over http(s), not file://
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    const swCode = `
+      const CACHE = "futword-v1";
+      self.addEventListener("install", e => { self.skipWaiting(); });
+      self.addEventListener("activate", e => { e.waitUntil(self.clients.claim()); });
+      self.addEventListener("fetch", e => {
+        if (e.request.method !== "GET") return;
+        e.respondWith(
+          caches.open(CACHE).then(cache =>
+            cache.match(e.request).then(cached => {
+              const fetchPromise = fetch(e.request).then(net => {
+                if (net && net.status === 200 && e.request.url.startsWith(self.location.origin)) {
+                  cache.put(e.request, net.clone());
+                }
+                return net;
+              }).catch(() => cached);
+              return cached || fetchPromise;
+            })
+          )
+        );
+      });
+    `;
+    const swBlob = new Blob([swCode], { type: "text/javascript" });
+    const swUrl = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl).catch(() => {});
+  }
+}
+
+// ── INIT ────────────────────────────────────────────────────
+setupPWA();
+loadStats();
+loadTheme();
+
+// If opened via a friend's challenge link, that takes over
+if (!checkLinkChallenge()) {
+  loadDayProgress();
+  updateStatsUI();
+  document.getElementById("challenge-num").textContent = "DESAFIO #" + dayIndex();
+  updateLevelNav();
+  renderLevel();
+} else {
+  updateStatsUI();
+}
+
+const soundBtn = document.getElementById("btn-sound");
+soundBtn.textContent = soundOn ? "🔊" : "🔇";
+soundBtn.classList.toggle("off", !soundOn);
+</script>
+</body>
+</html>
