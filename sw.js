@@ -1,6 +1,6 @@
 // FutWord Service Worker
 // Bump CACHE_VERSION whenever you deploy changes so clients fetch the new files.
-const CACHE_VERSION = "futword-v3";
+const CACHE_VERSION = "futword-v4";
 const CORE_ASSETS = [
   "./",
   "./index.html",
